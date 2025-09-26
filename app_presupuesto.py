@@ -1,4 +1,4 @@
-# app_presupuesto_final.py
+# app_presupuesto.py
 
 import streamlit as st
 import pandas as pd
@@ -60,6 +60,9 @@ if usuario:
         "Negocio": ["Ventas", "Servicios"],
     }
 
+    # -------------------------------
+    # Selección de tipo, categoría y descripción
+    # -------------------------------
     tipos_movimiento = ["Ingreso", "Gasto", "Ahorro", "Inversión"]
     tipo = st.selectbox("Tipo de Movimiento", tipos_movimiento, key="tipo_mov")
 
@@ -71,12 +74,19 @@ if usuario:
     descripcion = st.selectbox("Descripción", descripciones_comunes.get(categoria, ["Otro"]), key="desc_mov")
     monto = st.number_input("Monto", min_value=0.0, step=10.0, key="monto_mov")
 
+    # -------------------------------
+    # Mapa de correspondencia para evitar KeyError
+    # -------------------------------
+    tipo_mapping = {
+        "Ingreso": "ingresos",
+        "Gasto": "gastos",
+        "Ahorro": "ahorro",
+        "Inversión": "inversion"
+    }
+
     if st.button("Agregar Movimiento"):
         fecha = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        # -------------------------------
-        # Fix KeyError para inversión
-        # -------------------------------
-        tipo_key = "inversion" if tipo == "Inversión" else tipo.lower()
+        tipo_key = tipo_mapping[tipo]
         data[tipo_key].append({
             "fecha": fecha,
             "categoria": categoria,
@@ -96,12 +106,12 @@ if usuario:
     fecha_fin = st.date_input("Hasta")
 
     movimientos_filtrados = []
-    for t in ["ingresos", "gastos", "ahorro", "inversion"]:
-        for mov in data[t]:
+    for t_key, t_display in tipo_mapping.items():
+        for mov in data[t_display]:
             mov_fecha = datetime.strptime(mov["fecha"], "%Y-%m-%d %H:%M:%S").date()
             if fecha_inicio <= mov_fecha <= fecha_fin:
                 mov_copy = mov.copy()
-                mov_copy["Tipo"] = t.capitalize() if t != "inversion" else "Inversión"
+                mov_copy["Tipo"] = t_key
                 movimientos_filtrados.append(mov_copy)
 
     if movimientos_filtrados:
@@ -143,19 +153,17 @@ if usuario:
     st.plotly_chart(fig, use_container_width=True)
 
     # -------------------------------
-    # Botón de donación bonito con Nequi (auto rellena número)
+    # Botón de donación a Nequi (autorrellena número)
     # -------------------------------
     st.subheader("☕ Donar un café")
-    nequi_num = "3248580136"
-    donar_html = f"""
-    <a href="https://nequi.com/{nequi_num}?amount=&concept=Donación%20App" target="_blank" style="
+    donar_html = """
+    <a href="https://nequi.com/p2p/3248580136" target="_blank" style="
         text-decoration:none;
         color:white;
         background-color:#00B140; 
-        padding:12px 24px; 
-        border-radius:10px; 
+        padding:10px 20px; 
+        border-radius:8px; 
         font-weight:bold;
-        font-size:18px;
         display:inline-block;">
         ☕ Donar un café
     </a>
@@ -164,6 +172,7 @@ if usuario:
 
 else:
     st.warning("Por favor ingresa tu nombre para iniciar la app.")
+
 
 
 
