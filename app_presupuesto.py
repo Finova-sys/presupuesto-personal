@@ -47,6 +47,9 @@ if usuario:
     categorias_ingreso = ["Salario", "Freelance", "Negocio", "Otros"]
     categorias_gasto = ["Alimentos", "Transporte", "Servicios",
                         "Entretenimiento", "Salud", "Educación", "Otros"]
+    categorias_ahorro = ["Cuenta de ahorros", "Fondo de emergencia", "CDT", "Otros"]
+    categorias_inversion = ["Acciones", "Bonos", "Criptomonedas", "Bienes raíces", "Otros"]
+
     descripciones_comunes = {
         "Alimentos": ["Supermercado", "Restaurante", "Café"],
         "Transporte": ["Taxi", "Gasolina", "Bus", "Metro"],
@@ -54,19 +57,30 @@ if usuario:
         "Entretenimiento": ["Cine", "Concierto", "Videojuegos"],
         "Salud": ["Medicamentos", "Consultas", "Gym"],
         "Educación": ["Cursos", "Libros", "Talleres"],
-        "Otros": ["Varios"],
         "Salario": ["Mensual", "Extra"],
         "Freelance": ["Proyecto1", "Proyecto2"],
         "Negocio": ["Ventas", "Servicios"],
+        "Cuenta de ahorros": ["Mensual", "Automático"],
+        "Fondo de emergencia": ["Aporte mensual"],
+        "CDT": ["Inversión fija"],
+        "Acciones": ["Bolsa", "Dividendos"],
+        "Bonos": ["Gobierno", "Empresariales"],
+        "Criptomonedas": ["Bitcoin", "Ethereum", "Altcoins"],
+        "Bienes raíces": ["Arriendo", "Compra"]
     }
 
     tipos_movimiento = ["Ingreso", "Gasto", "Ahorro", "Inversión"]
     tipo = st.selectbox("Tipo de Movimiento", tipos_movimiento, key="tipo_mov")
 
+    # Selección de categoría según el tipo
     if tipo == "Ingreso":
         categoria = st.selectbox("Categoría", categorias_ingreso, key="cat_mov")
-    else:
+    elif tipo == "Gasto":
         categoria = st.selectbox("Categoría", categorias_gasto, key="cat_mov")
+    elif tipo == "Ahorro":
+        categoria = st.selectbox("Categoría", categorias_ahorro, key="cat_mov")
+    else:
+        categoria = st.selectbox("Categoría", categorias_inversion, key="cat_mov")
 
     descripcion = st.selectbox("Descripción", descripciones_comunes.get(categoria, ["Otro"]), key="desc_mov")
     monto = st.number_input("Monto", min_value=0.0, step=10.0, key="monto_mov", format="%.2f")
@@ -167,6 +181,7 @@ if usuario:
 
 else:
     st.warning("Por favor ingresa tu nombre para iniciar la app.")
+
 
 
 
