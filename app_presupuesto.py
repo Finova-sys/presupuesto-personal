@@ -102,6 +102,27 @@ if usuario:
         st.success(f"{tipo} agregado: ${monto:,.2f} en {categoria} ({descripcion})")
 
     # -------------------------------
+    # Resumen y gráfica
+    # -------------------------------
+    total_ingresos = sum([i["monto"] for i in data["ingresos"]])
+    total_gastos = sum([g["monto"] for g in data["gastos"]])
+    total_ahorro = sum([a["monto"] for a in data["ahorro"]])
+    total_inversion = sum([inv["monto"] for inv in data["inversion"]])
+    saldo = total_ingresos - total_gastos - total_ahorro - total_inversion
+
+    # -------------------------------
+    # Saldo debajo del título principal
+    # -------------------------------
+    saldo_top_html = f"""
+    <div style="text-align:center; margin:10px 0;">
+        <h2 style="color:#1E90FF; font-size:38px; font-weight:bold;">
+            💳 Saldo Disponible: ${saldo:,.2f}
+        </h2>
+    </div>
+    """
+    st.markdown(saldo_top_html, unsafe_allow_html=True)
+
+    # -------------------------------
     # Filtro por fecha
     # -------------------------------
     st.subheader("📅 Consultar movimientos por fecha")
@@ -128,14 +149,8 @@ if usuario:
         st.info("No hay movimientos en el rango de fechas seleccionado.")
 
     # -------------------------------
-    # Resumen y gráfica
+    # Totales y gráfica
     # -------------------------------
-    total_ingresos = sum([i["monto"] for i in data["ingresos"]])
-    total_gastos = sum([g["monto"] for g in data["gastos"]])
-    total_ahorro = sum([a["monto"] for a in data["ahorro"]])
-    total_inversion = sum([inv["monto"] for inv in data["inversion"]])
-    saldo = total_ingresos - total_gastos - total_ahorro - total_inversion
-
     st.subheader("💵 Resumen")
     st.markdown(f"- **Total Ingresos:** ${total_ingresos:,.2f}")
     st.markdown(f"- **Total Gastos:** ${total_gastos:,.2f}")
@@ -156,16 +171,16 @@ if usuario:
     st.plotly_chart(fig, use_container_width=True)
 
     # -------------------------------
-    # Saldo disponible destacado
+    # Saldo disponible debajo de la gráfica
     # -------------------------------
-    saldo_html = f"""
+    saldo_bottom_html = f"""
     <div style="text-align:center; margin:20px 0;">
         <h2 style="color:#1E90FF; font-size:36px; font-weight:bold;">
             💳 Saldo Disponible: ${saldo:,.2f}
         </h2>
     </div>
     """
-    st.markdown(saldo_html, unsafe_allow_html=True)
+    st.markdown(saldo_bottom_html, unsafe_allow_html=True)
 
     # -------------------------------
     # Botón de donación
@@ -192,8 +207,6 @@ if usuario:
 
 else:
     st.warning("Por favor ingresa tu nombre para iniciar la app.")
-
-
 
 
 
