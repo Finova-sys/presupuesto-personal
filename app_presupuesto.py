@@ -113,7 +113,7 @@ if usuario:
     else:
         st.info("No hay movimientos en el rango de fechas seleccionado.")
 
-       # -------------------------------
+    # -------------------------------
     # Resumen y gráfica
     # -------------------------------
     total_ingresos = sum([i["monto"] for i in data["ingresos"]])
@@ -136,10 +136,10 @@ if usuario:
         "Inversión": total_inversion
     }
     df_resumen = pd.DataFrame(list(resumen.items()), columns=["Categoría", "Monto"])
-    colores = {"Ingresos": "green", "Gastos": "red", "Ahorro": "blue", "Inversión": "gold"}
-
-    fig = px.bar(df_resumen, x="Categoría", y="Monto", color="Categoría", text="Monto", height=500)
+    colores = {"Ingresos": "#00B140","Gastos": "#FF4C4C","Ahorro": "#1E90FF","Inversión": "#FFD700"}
+    fig = px.bar(df_resumen, x="Categoría", y="Monto", text="Monto", height=500)
     fig.update_traces(marker=dict(color=[colores[c] for c in df_resumen["Categoría"]]))
+    fig.update_layout(showlegend=False)
     st.plotly_chart(fig, use_container_width=True)
 
     # -------------------------------
@@ -167,6 +167,7 @@ if usuario:
 
 else:
     st.warning("Por favor ingresa tu nombre para iniciar la app.")
+
 
 
 
