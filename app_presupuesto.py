@@ -26,8 +26,6 @@ footer {visibility: hidden;}
 """
 st.markdown(hide_streamlit_style, unsafe_allow_html=True)
 
-st.title("💰 Presupuesto Personal")
-
 # -------------------------------
 # Nombre de usuario
 # -------------------------------
@@ -47,9 +45,6 @@ if usuario:
     categorias_ingreso = ["Salario", "Freelance", "Negocio", "Otros"]
     categorias_gasto = ["Alimentos", "Transporte", "Servicios",
                         "Entretenimiento", "Salud", "Educación", "Otros"]
-    categorias_ahorro = ["Cuenta de ahorros", "Fondo de emergencia", "CDT", "Otros"]
-    categorias_inversion = ["Acciones", "Bonos", "Criptomonedas", "Bienes raíces", "Otros"]
-
     descripciones_comunes = {
         "Alimentos": ["Supermercado", "Restaurante", "Café"],
         "Transporte": ["Taxi", "Gasolina", "Bus", "Metro"],
@@ -57,36 +52,25 @@ if usuario:
         "Entretenimiento": ["Cine", "Concierto", "Videojuegos"],
         "Salud": ["Medicamentos", "Consultas", "Gym"],
         "Educación": ["Cursos", "Libros", "Talleres"],
+        "Otros": ["Varios"],
         "Salario": ["Mensual", "Extra"],
         "Freelance": ["Proyecto1", "Proyecto2"],
         "Negocio": ["Ventas", "Servicios"],
-        "Cuenta de ahorros": ["Mensual", "Automático"],
-        "Fondo de emergencia": ["Aporte mensual"],
-        "CDT": ["Inversión fija"],
-        "Acciones": ["Bolsa", "Dividendos"],
-        "Bonos": ["Gobierno", "Empresariales"],
-        "Criptomonedas": ["Bitcoin", "Ethereum", "Altcoins"],
-        "Bienes raíces": ["Arriendo", "Compra"]
     }
 
     tipos_movimiento = ["Ingreso", "Gasto", "Ahorro", "Inversión"]
     tipo = st.selectbox("Tipo de Movimiento", tipos_movimiento, key="tipo_mov")
 
-    # Selección de categoría según el tipo
     if tipo == "Ingreso":
         categoria = st.selectbox("Categoría", categorias_ingreso, key="cat_mov")
-    elif tipo == "Gasto":
-        categoria = st.selectbox("Categoría", categorias_gasto, key="cat_mov")
-    elif tipo == "Ahorro":
-        categoria = st.selectbox("Categoría", categorias_ahorro, key="cat_mov")
     else:
-        categoria = st.selectbox("Categoría", categorias_inversion, key="cat_mov")
+        categoria = st.selectbox("Categoría", categorias_gasto, key="cat_mov")
 
     descripcion = st.selectbox("Descripción", descripciones_comunes.get(categoria, ["Otro"]), key="desc_mov")
     monto = st.number_input("Monto", min_value=0.0, step=10.0, key="monto_mov", format="%.2f")
 
     # Mapeo de tipo a clave correcta
-    tipo_key_map = {"Ingreso":"ingresos","Gasto":"gastos","Ahorro":"ahorro","Inversión":"inversion"}
+    tipo_key_map = {"Ingreso": "ingresos", "Gasto": "gastos", "Ahorro": "ahorro", "Inversión": "inversion"}
     tipo_key = tipo_key_map[tipo]
 
     if st.button("Agregar Movimiento"):
@@ -110,12 +94,11 @@ if usuario:
     total_inversion = sum([inv["monto"] for inv in data["inversion"]])
     saldo = total_ingresos - total_gastos - total_ahorro - total_inversion
 
-    # -------------------------------
-    # Saldo debajo del título principal
-    # -------------------------------
+    # Título y saldo debajo
     saldo_top_html = f"""
     <div style="text-align:center; margin:10px 0;">
-        <h2 style="color:#1E90FF; font-size:38px; font-weight:bold;">
+        <h1 style="font-size:48px;">💰 Presupuesto Personal</h1>
+        <h2 style="color:#1E90FF; font-size:38px; font-weight:bold; margin-top:10px;">
             💳 Saldo Disponible: ${saldo:,.2f}
         </h2>
     </div>
@@ -149,7 +132,7 @@ if usuario:
         st.info("No hay movimientos en el rango de fechas seleccionado.")
 
     # -------------------------------
-    # Totales y gráfica
+    # Totales detallados
     # -------------------------------
     st.subheader("💵 Resumen")
     st.markdown(f"- **Total Ingresos:** ${total_ingresos:,.2f}")
@@ -157,6 +140,7 @@ if usuario:
     st.markdown(f"- **Total Ahorro:** ${total_ahorro:,.2f}")
     st.markdown(f"- **Total Inversión:** ${total_inversion:,.2f}")
 
+    # Gráfica de barras colorida
     resumen = {
         "Ingresos": total_ingresos,
         "Gastos": total_gastos,
@@ -164,18 +148,17 @@ if usuario:
         "Inversión": total_inversion
     }
     df_resumen = pd.DataFrame(list(resumen.items()), columns=["Categoría", "Monto"])
-    colores = {"Ingresos": "#00B140","Gastos": "#FF4C4C","Ahorro": "#1E90FF","Inversión": "#FFD700"}
+    colores = {"Ingresos": "#00B140", "Gastos": "#FF4C4C", "Ahorro": "#1E90FF", "Inversión": "#FFD700"}
+
     fig = px.bar(df_resumen, x="Categoría", y="Monto", text="Monto", height=500)
     fig.update_traces(marker=dict(color=[colores[c] for c in df_resumen["Categoría"]]))
     fig.update_layout(showlegend=False)
     st.plotly_chart(fig, use_container_width=True)
 
-    # -------------------------------
-    # Saldo disponible debajo de la gráfica
-    # -------------------------------
+    # Saldo debajo de la gráfica en grande
     saldo_bottom_html = f"""
     <div style="text-align:center; margin:20px 0;">
-        <h2 style="color:#1E90FF; font-size:36px; font-weight:bold;">
+        <h2 style="color:#1E90FF; font-size:40px; font-weight:bold;">
             💳 Saldo Disponible: ${saldo:,.2f}
         </h2>
     </div>
@@ -207,6 +190,8 @@ if usuario:
 
 else:
     st.warning("Por favor ingresa tu nombre para iniciar la app.")
+
+
 
 
 
