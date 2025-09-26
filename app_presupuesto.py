@@ -129,7 +129,7 @@ if usuario:
     st.markdown(f"- **Total Inversión:** ${total_inversion:,.2f}")
     st.markdown(f"- **Saldo Disponible:** ${saldo:,.2f}")
 
-    # Gráfica de barras colorida con colores fijos
+    # Gráfica de barras colorida
     resumen = {
         "Ingresos": total_ingresos,
         "Gastos": total_gastos,
@@ -137,67 +137,57 @@ if usuario:
         "Inversión": total_inversion
     }
     df_resumen = pd.DataFrame(list(resumen.items()), columns=["Categoría", "Monto"])
-    colores = {"Ingresos":"green","Gastos":"red","Ahorro":"blue","Inversión":"orange"}
+    colores = {"Ingresos":"green","Gastos":"red","Ahorro":"blue","Inversión":"purple"}
 
-    fig = px.bar(
-        df_resumen, 
-        x="Categoría", 
-        y="Monto", 
-        color="Categoría", 
-        text="Monto", 
-        height=500,
-        color_discrete_map=colores  # <- esto asegura los colores correctos
-    )
-    fig.update_traces(texttemplate='%{text:,.2f}', textposition='outside')
+    fig = px.bar(df_resumen, x="Categoría", y="Monto", color="Categoría", text="Monto", height=500)
+    fig.update_traces(marker=dict(color=[colores[c] for c in df_resumen["Categoría"]]))
     st.plotly_chart(fig, use_container_width=True)
 
-   # -------------------------------
-# Botón de donación moderno
-# -------------------------------
-donar_html = """
-<div style="
-    display:flex; 
-    flex-direction:column; 
-    align-items:center; 
-    margin-top:20px;
-">
-    <a href="https://clientes.nequi.com.co/recargas?_ga=2.76959132.82669726.1758904065-126051860.1758904065" 
-       target="_blank" 
-       style="
-            text-decoration:none;
-            color:white;
-            background: linear-gradient(135deg, #00B140, #00FF70);
-            padding:20px 40px;
-            border-radius:12px;
-            font-weight:bold;
-            font-size:18px;
-            box-shadow: 2px 4px 10px rgba(0,0,0,0.2);
-            transition: all 0.3s ease;
-       "
-       onmouseover="this.style.background='linear-gradient(135deg,#00FF70,#00B140)';"
-       onmouseout="this.style.background='linear-gradient(135deg, #00B140, #00FF70)';"
-    >
-        ☕ Donar un café
-    </a>
-    <span style="
-        margin-top:10px;
-        font-weight:bold;
-        font-size:16px;
-        color:#333;
-        background-color:#f0f0f0;
-        padding:5px 10px;
-        border-radius:8px;
-        box-shadow: 1px 2px 5px rgba(0,0,0,0.1);
+    # -------------------------------
+    # Botón de donación moderno
+    # -------------------------------
+    donar_html = """
+    <div style="
+        display:flex; 
+        flex-direction:column; 
+        align-items:center; 
+        margin-top:20px;
     ">
-        Nequi 3248580136
-    </span>
-</div>
-"""
-st.markdown(donar_html, unsafe_allow_html=True)
-
+        <a href="https://clientes.nequi.com.co/recargas?_ga=2.76959132.82669726.1758904065-126051860.1758904065" 
+           target="_blank" 
+           style="
+                text-decoration:none;
+                color:white;
+                background: linear-gradient(135deg, #00B140, #00FF70);
+                padding:20px 40px;
+                border-radius:12px;
+                font-weight:bold;
+                font-size:18px;
+                box-shadow: 2px 4px 10px rgba(0,0,0,0.2);
+                transition: all 0.3s ease;
+           "
+        >
+            ☕ Donar un café
+        </a>
+        <span style="
+            margin-top:10px;
+            font-weight:bold;
+            font-size:16px;
+            color:#333;
+            background-color:#f0f0f0;
+            padding:5px 10px;
+            border-radius:8px;
+            box-shadow: 1px 2px 5px rgba(0,0,0,0.1);
+        ">
+            Nequi 3248580136
+        </span>
+    </div>
+    """
+    st.markdown(donar_html, unsafe_allow_html=True)
 
 else:
     st.warning("Por favor ingresa tu nombre para iniciar la app.")
+
 
 
 
