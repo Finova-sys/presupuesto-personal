@@ -16,17 +16,6 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="collapsed"
 )
-    # -------------------------------
-    # Saldo debajo del título principal
-    # -------------------------------
-    saldo_top_html = f"""
-    <div style="text-align:center; margin:10px 0;">
-        <h2 style="color:#1E90FF; font-size:38px; font-weight:bold;">
-            💳 Saldo Disponible: ${saldo:,.2f}
-        </h2>
-    </div>
-    """
-    st.markdown(saldo_top_html, unsafe_allow_html=True)
 
 # Ocultar menú y footer de Streamlit
 hide_streamlit_style = """
@@ -121,7 +110,17 @@ if usuario:
     total_inversion = sum([inv["monto"] for inv in data["inversion"]])
     saldo = total_ingresos - total_gastos - total_ahorro - total_inversion
 
-
+    # -------------------------------
+    # Saldo debajo del título principal
+    # -------------------------------
+    saldo_top_html = f"""
+    <div style="text-align:center; margin:10px 0;">
+        <h2 style="color:#1E90FF; font-size:38px; font-weight:bold;">
+            💳 Saldo Disponible: ${saldo:,.2f}
+        </h2>
+    </div>
+    """
+    st.markdown(saldo_top_html, unsafe_allow_html=True)
 
     # -------------------------------
     # Filtro por fecha
