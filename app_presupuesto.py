@@ -29,6 +29,12 @@ st.markdown(hide_streamlit_style, unsafe_allow_html=True)
 st.title("💰 Presupuesto Personal")
 
 # -------------------------------
+# Inicializar session_state para monto
+# -------------------------------
+if "monto_mov" not in st.session_state:
+    st.session_state.monto_mov = 0.0
+
+# -------------------------------
 # Nombre de usuario
 # -------------------------------
 usuario = st.text_input("Ingresa tu nombre para guardar tus datos", "")
@@ -70,8 +76,8 @@ if usuario:
 
     descripcion = st.selectbox("Descripción", descripciones_comunes.get(categoria, ["Otro"]), key="desc_mov")
     
-    # Número de monto con valor inicial 0
-    monto = st.number_input("Monto", min_value=0.0, step=10.0, format="%.2f", value=0.0, key="monto_mov")
+    # Número de monto vinculado a session_state
+    monto = st.number_input("Monto", min_value=0.0, step=10.0, format="%.2f", key="monto_mov")
 
     # Mapeo de tipo a clave correcta
     tipo_key_map = {"Ingreso":"ingresos","Gasto":"gastos","Ahorro":"ahorro","Inversión":"inversion"}
@@ -83,13 +89,13 @@ if usuario:
             "fecha": fecha,
             "categoria": categoria,
             "descripcion": descripcion,
-            "monto": monto
+            "monto": st.session_state.monto_mov
         })
         with open(archivo_usuario, "w", encoding="utf-8") as f:
             json.dump(data, f, ensure_ascii=False, indent=4)
-        st.success(f"{tipo} agregado: ${monto:,.2f} en {categoria} ({descripcion})")
-        # Reiniciar input usando rerun
-        st.experimental_rerun()
+        st.success(f"{tipo} agregado: ${st.session_state.monto_mov:,.2f} en {categoria} ({descripcion})")
+        # Reiniciar el input de monto a 0 de forma segura
+        st.session_state.monto_mov = 0.0
 
     # -------------------------------
     # Filtro por fecha
@@ -188,7 +194,7 @@ if usuario:
             border-radius:8px;
             box-shadow: 1px 2px 5px rgba(0,0,0,0.1);
         ">
-            Nequi 3248580136
+            Al Nequi 3248580136
         </span>
     </div>
     """
@@ -196,6 +202,7 @@ if usuario:
 
 else:
     st.warning("Por favor ingresa tu nombre para iniciar la app.")
+
 
 
 
