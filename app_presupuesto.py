@@ -1,4 +1,4 @@
-# app_presupuesto.py
+# app_presupuesto_final.py
 
 import streamlit as st
 import pandas as pd
@@ -60,9 +60,6 @@ if usuario:
         "Negocio": ["Ventas", "Servicios"],
     }
 
-    # -------------------------------
-    # Selección de tipo, categoría y descripción
-    # -------------------------------
     tipos_movimiento = ["Ingreso", "Gasto", "Ahorro", "Inversión"]
     tipo = st.selectbox("Tipo de Movimiento", tipos_movimiento, key="tipo_mov")
 
@@ -72,31 +69,23 @@ if usuario:
         categoria = st.selectbox("Categoría", categorias_gasto, key="cat_mov")
 
     descripcion = st.selectbox("Descripción", descripciones_comunes.get(categoria, ["Otro"]), key="desc_mov")
-    monto = st.number_input("Monto", min_value=0.0, step=10.0, key="monto_mov")
+    monto = st.number_input("Monto", min_value=0.0, step=10.0, key="monto_mov", format="%.2f")
 
-    # -------------------------------
-    # Mapa de correspondencia para evitar KeyError
-    # -------------------------------
-    tipo_mapping = {
-        "Ingreso": "ingresos",
-        "Gasto": "gastos",
-        "Ahorro": "ahorro",
-        "Inversión": "inversion"
-    }
+    # Mapeo de tipo a clave correcta
+    tipo_key_map = {"Ingreso":"ingresos","Gasto":"gastos","Ahorro":"ahorro","Inversión":"inversion"}
+    tipo_key = tipo_key_map[tipo]
 
     if st.button("Agregar Movimiento"):
         fecha = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        tipo_key = tipo_mapping[tipo]
         data[tipo_key].append({
             "fecha": fecha,
             "categoria": categoria,
             "descripcion": descripcion,
             "monto": monto
         })
-        # Guardar automáticamente
         with open(archivo_usuario, "w", encoding="utf-8") as f:
             json.dump(data, f, ensure_ascii=False, indent=4)
-        st.success(f"{tipo} agregado: ${monto:,.0f} en {categoria} ({descripcion})")
+        st.success(f"{tipo} agregado: ${monto:,.2f} en {categoria} ({descripcion})")
 
     # -------------------------------
     # Filtro por fecha
@@ -106,19 +95,19 @@ if usuario:
     fecha_fin = st.date_input("Hasta")
 
     movimientos_filtrados = []
-    for t_key, t_display in tipo_mapping.items():
-        for mov in data[t_display]:
+    for t in ["ingresos", "gastos", "ahorro", "inversion"]:
+        for mov in data[t]:
             mov_fecha = datetime.strptime(mov["fecha"], "%Y-%m-%d %H:%M:%S").date()
             if fecha_inicio <= mov_fecha <= fecha_fin:
                 mov_copy = mov.copy()
-                mov_copy["Tipo"] = t_key
+                mov_copy["Tipo"] = t.capitalize() if t != "inversion" else "Inversión"
                 movimientos_filtrados.append(mov_copy)
 
     if movimientos_filtrados:
         df_filtrado = pd.DataFrame(movimientos_filtrados)
         df_filtrado = df_filtrado.sort_values(by="fecha", ascending=False)
         # Formato moneda
-        df_filtrado["monto"] = df_filtrado["monto"].apply(lambda x: f"${x:,.0f}")
+        df_filtrado["monto"] = df_filtrado["monto"].apply(lambda x: f"${x:,.2f}")
         st.subheader("📋 Movimientos filtrados")
         st.dataframe(df_filtrado, use_container_width=True, height=300)
     else:
@@ -134,13 +123,13 @@ if usuario:
     saldo = total_ingresos - total_gastos - total_ahorro - total_inversion
 
     st.subheader("💵 Resumen")
-    st.markdown(f"- **Total Ingresos:** ${total_ingresos:,.0f}")
-    st.markdown(f"- **Total Gastos:** ${total_gastos:,.0f}")
-    st.markdown(f"- **Total Ahorro:** ${total_ahorro:,.0f}")
-    st.markdown(f"- **Total Inversión:** ${total_inversion:,.0f}")
-    st.markdown(f"- **Saldo Disponible:** ${saldo:,.0f}")
+    st.markdown(f"- **Total Ingresos:** ${total_ingresos:,.2f}")
+    st.markdown(f"- **Total Gastos:** ${total_gastos:,.2f}")
+    st.markdown(f"- **Total Ahorro:** ${total_ahorro:,.2f}")
+    st.markdown(f"- **Total Inversión:** ${total_inversion:,.2f}")
+    st.markdown(f"- **Saldo Disponible:** ${saldo:,.2f}")
 
-    # Gráfica de barras colorida por tipo de movimiento
+    # Gráfica de barras colorida
     resumen = {
         "Ingresos": total_ingresos,
         "Gastos": total_gastos,
@@ -148,31 +137,29 @@ if usuario:
         "Inversión": total_inversion
     }
     df_resumen = pd.DataFrame(list(resumen.items()), columns=["Categoría", "Monto"])
-    colores = {"Ingresos": "green", "Gastos": "red", "Ahorro": "blue", "Inversión": "orange"}
+    colores = {"Ingresos":"green","Gastos":"red","Ahorro":"blue","Inversión":"orange"}
 
     fig = px.bar(df_resumen, x="Categoría", y="Monto", color="Categoría", text="Monto", height=500)
-    fig.update_traces(marker=dict(color=[colores[c] for c in df_resumen["Categoría"]]),
-                      texttemplate='%{text:$,.0f}')
+    fig.update_traces(marker=dict(color=[colores[c] for c in df_resumen["Categoría"]]))
     st.plotly_chart(fig, use_container_width=True)
 
     # -------------------------------
-    # Botón de donación bonito
+    # Botón de donación
     # -------------------------------
-    st.subheader("☕ Donar un café")
     donar_html = """
-    <a href="https://www.nequi.com" target="_blank" style="
+    <a href="https://clientes.nequi.com.co/recargas?_ga=2.76959132.82669726.1758904065-126051860.1758904065" target="_blank" style="
         text-decoration:none;
         color:white;
         background-color:#00B140; 
-        padding:10px 20px; 
-        border-radius:8px; 
+        padding:15px 25px; 
+        border-radius:10px; 
         font-weight:bold;
         display:inline-block;">
         ☕ Donar un café
     </a>
-    <p>Al Nequi 3248580136</p>
     """
     st.markdown(donar_html, unsafe_allow_html=True)
+    st.markdown("Al Nequi 3248580136")  # Número debajo del botón
 
 else:
     st.warning("Por favor ingresa tu nombre para iniciar la app.")
