@@ -1,3 +1,5 @@
+# app_presupuesto_final.py
+
 import streamlit as st
 import pandas as pd
 import json
@@ -67,18 +69,10 @@ if usuario:
         categoria = st.selectbox("Categoría", categorias_gasto, key="cat_mov")
 
     descripcion = st.selectbox("Descripción", descripciones_comunes.get(categoria, ["Otro"]), key="desc_mov")
-
-    # Inicializar monto
-    if "monto_mov" not in st.session_state:
-        st.session_state["monto_mov"] = 0.0
-
-    monto_input = st.number_input(
-        "Monto", min_value=0.0, step=10.0,
-        format="%.2f", key="monto_mov"
-    )
+    monto = st.number_input("Monto", min_value=0.0, step=10.0, key="monto_mov", format="%.2f")
 
     # Mapeo de tipo a clave correcta
-    tipo_key_map = {"Ingreso": "ingresos", "Gasto": "gastos", "Ahorro": "ahorro", "Inversión": "inversion"}
+    tipo_key_map = {"Ingreso":"ingresos","Gasto":"gastos","Ahorro":"ahorro","Inversión":"inversion"}
     tipo_key = tipo_key_map[tipo]
 
     if st.button("Agregar Movimiento"):
@@ -87,15 +81,11 @@ if usuario:
             "fecha": fecha,
             "categoria": categoria,
             "descripcion": descripcion,
-            "monto": monto_input
+            "monto": monto
         })
         with open(archivo_usuario, "w", encoding="utf-8") as f:
             json.dump(data, f, ensure_ascii=False, indent=4)
-        st.success(f"{tipo} agregado: ${monto_input:,.2f} en {categoria} ({descripcion})")
-
-        # Reiniciar monto sin error
-        st.session_state["monto_mov"] = 0.0
-        st.query_params.from_dict({"refresh": str(datetime.now().timestamp())})
+        st.success(f"{tipo} agregado: ${monto:,.2f} en {categoria} ({descripcion})")
 
     # -------------------------------
     # Filtro por fecha
@@ -116,13 +106,14 @@ if usuario:
     if movimientos_filtrados:
         df_filtrado = pd.DataFrame(movimientos_filtrados)
         df_filtrado = df_filtrado.sort_values(by="fecha", ascending=False)
+        # Formato moneda
         df_filtrado["monto"] = df_filtrado["monto"].apply(lambda x: f"${x:,.2f}")
         st.subheader("📋 Movimientos filtrados")
         st.dataframe(df_filtrado, use_container_width=True, height=300)
     else:
         st.info("No hay movimientos en el rango de fechas seleccionado.")
 
-    # -------------------------------
+       # -------------------------------
     # Resumen y gráfica
     # -------------------------------
     total_ingresos = sum([i["monto"] for i in data["ingresos"]])
@@ -176,9 +167,6 @@ if usuario:
 
 else:
     st.warning("Por favor ingresa tu nombre para iniciar la app.")
-
-
-
 
 
 
