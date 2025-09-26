@@ -180,14 +180,19 @@ if usuario:
         st.dataframe(df_page, use_container_width=True, height=350)
 
         # Selección para editar/eliminar
-        idx = st.number_input("Selecciona el número de fila para editar/eliminar", 
+        idx = st.number_input("Selecciona el número de fila para editar/eliminar",
                               min_value=0, max_value=len(df_filtrado)-1, step=1)
 
         if st.button("📝 Editar Movimiento"):
             mov = df_filtrado.iloc[idx]
-            nuevo_monto = st.number_input("Nuevo monto", min_value=0.0, step=10.0, value=float(mov["monto"].replace("$","").replace(",","")))
+
+            # Aquí corregimos el error: siempre tratamos "monto" como número
+            monto_original = mov["monto"]
+            if isinstance(monto_original, str):
+                monto_original = float(monto_original.replace("$", "").replace(",", ""))
+            nuevo_monto = st.number_input("Nuevo monto", min_value=0.0, step=10.0, value=float(monto_original))
+
             if st.button("Guardar Cambios"):
-                # Buscar y actualizar en JSON
                 for t in data:
                     for m in data[t]:
                         if m["fecha"] == mov["fecha"]:
@@ -224,10 +229,8 @@ if usuario:
             doc = SimpleDocTemplate(buffer, pagesize=letter)
             styles = getSampleStyleSheet()
             elements = []
-
             elements.append(Paragraph("📋 Reporte de Movimientos", styles["Title"]))
             elements.append(Spacer(1, 12))
-
             data_table = [df.columns.tolist()] + df.values.tolist()
             table = Table(data_table)
             table.setStyle(TableStyle([
@@ -311,6 +314,8 @@ if usuario:
 
 else:
     st.warning("Por favor ingresa tu nombre para iniciar la app.")
+
+
 
 
 
