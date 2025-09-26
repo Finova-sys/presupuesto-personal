@@ -5,7 +5,7 @@ import pandas as pd
 import json
 import os
 from datetime import datetime
-import plotly.graph_objects as go
+import plotly.express as px
 
 # -------------------------------
 # Configuración inicial
@@ -107,7 +107,7 @@ if usuario:
         st.info("No hay movimientos en el rango de fechas seleccionado.")
 
     # -------------------------------
-    # Resumen y gráfica 3D
+    # Resumen y gráfica
     # -------------------------------
     total_ingresos = sum([i["monto"] for i in data["ingresos"]])
     total_gastos = sum([g["monto"] for g in data["gastos"]])
@@ -122,39 +122,25 @@ if usuario:
     st.markdown(f"- **Total Inversión:** {total_inversion}")
     st.markdown(f"- **Saldo Disponible:** {saldo}")
 
-    # Gráfica 3D
+    # Gráfica de barras colorida
     resumen = {
         "Ingresos": total_ingresos,
         "Gastos": total_gastos,
         "Ahorro": total_ahorro,
         "Inversión": total_inversion
     }
-    categorias = list(resumen.keys())
-    montos = list(resumen.values())
-    colores = ["green", "red", "blue", "orange"]
+    df_resumen = pd.DataFrame(list(resumen.items()), columns=["Categoría", "Monto"])
+    colores = {"Ingresos": "green", "Gastos": "red", "Ahorro": "blue", "Inversión": "orange"}
 
-    fig = go.Figure(data=[go.Bar3d(
-        x=categorias,
-        y=["Total"]*len(categorias),
-        z=[0]*len(categorias),
-        dx=0.5,
-        dy=0.5,
-        dz=montos,
-        marker=dict(color=colores),
-    )])
-
-    fig.update_layout(scene=dict(
-        xaxis_title='Categoría',
-        yaxis_title='',
-        zaxis_title='Monto'
-    ))
+    fig = px.bar(df_resumen, x="Categoría", y="Monto", color="Categoría", text="Monto", height=500)
+    fig.update_traces(marker=dict(color=[colores[c] for c in df_resumen["Categoría"]]))
     st.plotly_chart(fig, use_container_width=True)
 
     # -------------------------------
     # Botón de donación bonito
     # -------------------------------
     st.subheader("☕ Donar un café")
-    donar_html = f"""
+    donar_html = """
     <a href="https://nequi.com/3248580136" target="_blank" style="
         text-decoration:none;
         color:white;
@@ -170,3 +156,5 @@ if usuario:
 
 else:
     st.warning("Por favor ingresa tu nombre para iniciar la app.")
+
+
