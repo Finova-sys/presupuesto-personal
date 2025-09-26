@@ -192,11 +192,12 @@ if usuario:
     st.markdown(saldo_bottom_html, unsafe_allow_html=True)
 
     # -------------------------------
-    # Botón de donación
+    # Botón de donación con copia al portapapeles
     # -------------------------------
     donar_html = """
     <div style="display:flex;flex-direction:column;align-items:center;margin-top:10px;">
         <a href="https://clientes.nequi.com.co/recargas" target="_blank" 
+           onclick="navigator.clipboard.writeText('3248580136'); alert('Número de Nequi copiado al portapapeles: 3248580136');"
            style="text-decoration:none;color:white;
                   background: linear-gradient(135deg, #00B140, #00FF70);
                   padding:20px 40px;border-radius:12px;
@@ -216,6 +217,8 @@ if usuario:
 
 else:
     st.warning("Por favor ingresa tu nombre para iniciar la app.")
+
+
 
 
 
