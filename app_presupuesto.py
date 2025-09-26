@@ -6,6 +6,11 @@ import json
 import os
 from datetime import datetime
 import plotly.express as px
+from io import BytesIO
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
+from reportlab.lib.pagesizes import letter
+from reportlab.lib import colors
+from reportlab.lib.styles import getSampleStyleSheet
 
 # -------------------------------
 # Configuración inicial
@@ -86,7 +91,7 @@ if usuario:
     monto = st.number_input("Monto", min_value=0.0, step=10.0, key="monto_mov", format="%.2f")
 
     # Mapeo de tipo a clave correcta
-    tipo_key_map = {"Ingreso":"ingresos","Gasto":"gastos","Ahorro":"ahorro","Inversión":"inversion"}
+    tipo_key_map = {"Ingreso": "ingresos", "Gasto": "gastos", "Ahorro": "ahorro", "Inversión": "inversion"}
     tipo_key = tipo_key_map[tipo]
 
     if st.button("Agregar Movimiento"):
@@ -138,13 +143,114 @@ if usuario:
                 mov_copy["Tipo"] = t.capitalize() if t != "inversion" else "Inversión"
                 movimientos_filtrados.append(mov_copy)
 
+    # -------------------------------
+    # Tabla con paginación + editar/eliminar
+    # -------------------------------
     if movimientos_filtrados:
         df_filtrado = pd.DataFrame(movimientos_filtrados)
         df_filtrado = df_filtrado.sort_values(by="fecha", ascending=False)
+
+        st.subheader("📋 Movimientos filtrados con paginación")
+
+        # Paginación
+        page_size = 10
+        total_rows = len(df_filtrado)
+        total_pages = (total_rows // page_size) + (1 if total_rows % page_size else 0)
+
+        if "page_number" not in st.session_state:
+            st.session_state.page_number = 1
+
+        col1, col2, col3 = st.columns([1, 2, 1])
+        with col1:
+            if st.button("⬅️ Anterior") and st.session_state.page_number > 1:
+                st.session_state.page_number -= 1
+        with col3:
+            if st.button("➡️ Siguiente") and st.session_state.page_number < total_pages:
+                st.session_state.page_number += 1
+        with col2:
+            st.markdown(f"**Página {st.session_state.page_number} de {total_pages}**")
+
+        start_idx = (st.session_state.page_number - 1) * page_size
+        end_idx = start_idx + page_size
+        df_page = df_filtrado.iloc[start_idx:end_idx].copy()
+
         # Formato moneda
-        df_filtrado["monto"] = df_filtrado["monto"].apply(lambda x: f"${x:,.2f}")
-        st.subheader("📋 Movimientos filtrados")
-        st.dataframe(df_filtrado, use_container_width=True, height=300)
+        df_page["monto"] = df_page["monto"].apply(lambda x: f"${x:,.2f}")
+
+        st.dataframe(df_page, use_container_width=True, height=350)
+
+        # Selección para editar/eliminar
+        idx = st.number_input("Selecciona el número de fila para editar/eliminar", 
+                              min_value=0, max_value=len(df_filtrado)-1, step=1)
+
+        if st.button("📝 Editar Movimiento"):
+            mov = df_filtrado.iloc[idx]
+            nuevo_monto = st.number_input("Nuevo monto", min_value=0.0, step=10.0, value=float(mov["monto"]))
+            if st.button("Guardar Cambios"):
+                # Buscar y actualizar en JSON
+                for t in data:
+                    for m in data[t]:
+                        if m["fecha"] == mov["fecha"]:
+                            m["monto"] = nuevo_monto
+                with open(archivo_usuario, "w", encoding="utf-8") as f:
+                    json.dump(data, f, ensure_ascii=False, indent=4)
+                st.success("Movimiento actualizado.")
+
+        if st.button("🗑️ Eliminar Movimiento"):
+            mov = df_filtrado.iloc[idx]
+            for t in data:
+                data[t] = [m for m in data[t] if m["fecha"] != mov["fecha"]]
+            with open(archivo_usuario, "w", encoding="utf-8") as f:
+                json.dump(data, f, ensure_ascii=False, indent=4)
+            st.success("Movimiento eliminado.")
+
+        # -------------------------------
+        # Exportar a Excel
+        # -------------------------------
+        output_excel = BytesIO()
+        df_filtrado.to_excel(output_excel, index=False, sheet_name="Movimientos")
+        st.download_button(
+            label="📊 Exportar a Excel",
+            data=output_excel.getvalue(),
+            file_name="movimientos.xlsx",
+            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        )
+
+        # -------------------------------
+        # Exportar a PDF
+        # -------------------------------
+        def export_pdf(df):
+            buffer = BytesIO()
+            doc = SimpleDocTemplate(buffer, pagesize=letter)
+            styles = getSampleStyleSheet()
+            elements = []
+
+            elements.append(Paragraph("📋 Reporte de Movimientos", styles["Title"]))
+            elements.append(Spacer(1, 12))
+
+            data_table = [df.columns.tolist()] + df.values.tolist()
+            table = Table(data_table)
+            table.setStyle(TableStyle([
+                ("BACKGROUND", (0, 0), (-1, 0), colors.grey),
+                ("TEXTCOLOR", (0, 0), (-1, 0), colors.whitesmoke),
+                ("ALIGN", (0, 0), (-1, -1), "CENTER"),
+                ("GRID", (0, 0), (-1, -1), 1, colors.black),
+                ("FONTSIZE", (0, 0), (-1, -1), 9),
+            ]))
+            elements.append(table)
+            doc.build(elements)
+            pdf = buffer.getvalue()
+            buffer.close()
+            return pdf
+
+        pdf_bytes = export_pdf(df_filtrado)
+        st.download_button(
+            label="📄 Exportar a PDF",
+            data=pdf_bytes,
+            file_name="movimientos.pdf",
+            mime="application/pdf"
+        )
+
     else:
         st.info("No hay movimientos en el rango de fechas seleccionado.")
 
@@ -164,10 +270,11 @@ if usuario:
         "Inversión": total_inversion
     }
     df_resumen = pd.DataFrame(list(resumen.items()), columns=["Categoría", "Monto"])
-    colores = {"Ingresos": "#00B140","Gastos": "#FF4C4C","Ahorro": "#1E90FF","Inversión": "#FFD700"}
+    colores = {"Ingresos": "#00B140", "Gastos": "#FF4C4C", "Ahorro": "#1E90FF", "Inversión": "#FFD700"}
     fig = px.bar(df_resumen, x="Categoría", y="Monto", text="Monto", height=500)
-    fig.update_traces(marker=dict(color=[colores[c] for c in df_resumen["Categoría"]]))
-    fig.update_layout(showlegend=False)
+    fig.update_traces(marker=dict(color=[colores[c] for c in df_resumen["Categoría"]]),
+                      texttemplate="$%{text:,.2f}", textposition="outside")
+    fig.update_layout(showlegend=False, yaxis_tickprefix="$", yaxis_tickformat=",")
     st.plotly_chart(fig, use_container_width=True)
 
     # -------------------------------
@@ -207,6 +314,8 @@ if usuario:
 
 else:
     st.warning("Por favor ingresa tu nombre para iniciar la app.")
+
+
 
 
 
