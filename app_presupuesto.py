@@ -152,7 +152,7 @@ if usuario:
     st.plotly_chart(fig, use_container_width=True)
 
     # -------------------------------
-    # Botón de donación moderno con logo Nequi
+    # Botón de donación moderno sin logo
     # -------------------------------
     donar_html = """
     <div style="
@@ -173,37 +173,29 @@ if usuario:
                 font-size:18px;
                 box-shadow: 2px 4px 10px rgba(0,0,0,0.2);
                 transition: all 0.3s ease;
-                display:flex;
-                align-items:center;
-            "
+           "
         >
             ☕ Donar un café
         </a>
-        <a href="https://clientes.nequi.com.co/recargas?_ga=2.76959132.82669726.1758904065-126051860.1758904065" 
-           target="_blank"
-           style="
-               margin-top:10px;
-               text-decoration:none;
-               color:#333;
-               background-color:#f0f0f0;
-               padding:5px 10px;
-               border-radius:8px;
-               font-weight:bold;
-               font-size:16px;
-               box-shadow: 1px 2px 5px rgba(0,0,0,0.1);
-               display:flex;
-               align-items:center;
-           "
-        >
-            <img src="https://upload.wikimedia.org/wikipedia/commons/5/52/Nequi_logo.png" width="24" style="margin-right:8px;">
+        <span style="
+            margin-top:10px;
+            font-weight:bold;
+            font-size:16px;
+            color:#333;
+            background-color:#f0f0f0;
+            padding:5px 10px;
+            border-radius:8px;
+            box-shadow: 1px 2px 5px rgba(0,0,0,0.1);
+        ">
             Nequi 3248580136
-        </a>
+        </span>
     </div>
     """
     st.markdown(donar_html, unsafe_allow_html=True)
 
 else:
     st.warning("Por favor ingresa tu nombre para iniciar la app.")
+
 
 
 
