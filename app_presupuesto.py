@@ -29,12 +29,6 @@ st.markdown(hide_streamlit_style, unsafe_allow_html=True)
 st.title("💰 Presupuesto Personal")
 
 # -------------------------------
-# Inicializar session_state
-# -------------------------------
-if "monto_mov" not in st.session_state:
-    st.session_state.monto_mov = 0.0
-
-# -------------------------------
 # Nombre de usuario
 # -------------------------------
 usuario = st.text_input("Ingresa tu nombre para guardar tus datos", "")
@@ -67,20 +61,24 @@ if usuario:
     }
 
     tipos_movimiento = ["Ingreso", "Gasto", "Ahorro", "Inversión"]
-    tipo = st.selectbox("Tipo de Movimiento", tipos_movimiento)
+    tipo = st.selectbox("Tipo de Movimiento", tipos_movimiento, key="tipo_mov")
 
     if tipo == "Ingreso":
-        categoria = st.selectbox("Categoría", categorias_ingreso)
+        categoria = st.selectbox("Categoría", categorias_ingreso, key="cat_mov")
     else:
-        categoria = st.selectbox("Categoría", categorias_gasto)
+        categoria = st.selectbox("Categoría", categorias_gasto, key="cat_mov")
 
-    descripcion = st.selectbox("Descripción", descripciones_comunes.get(categoria, ["Otro"]))
-    
-    # Usamos un input temporal en lugar de manipular directamente session_state
-    monto_input = st.number_input("Monto", min_value=0.0, step=10.0, format="%.2f")
+    descripcion = st.selectbox("Descripción", descripciones_comunes.get(categoria, ["Otro"]), key="desc_mov")
+
+    # Usamos session_state para mantener y resetear monto
+    if "monto_mov" not in st.session_state:
+        st.session_state.monto_mov = 0.0
+
+    monto_input = st.number_input("Monto", min_value=0.0, step=10.0,
+                                  format="%.2f", key="monto_mov")
 
     # Mapeo de tipo a clave correcta
-    tipo_key_map = {"Ingreso":"ingresos","Gasto":"gastos","Ahorro":"ahorro","Inversión":"inversion"}
+    tipo_key_map = {"Ingreso": "ingresos", "Gasto": "gastos", "Ahorro": "ahorro", "Inversión": "inversion"}
     tipo_key = tipo_key_map[tipo]
 
     if st.button("Agregar Movimiento"):
@@ -95,9 +93,9 @@ if usuario:
             json.dump(data, f, ensure_ascii=False, indent=4)
         st.success(f"{tipo} agregado: ${monto_input:,.2f} en {categoria} ({descripcion})")
 
-        # Reiniciar el campo de monto "indirectamente"
+        # Reiniciar monto sin error usando query_params
         st.session_state.monto_mov = 0.0
-        st.experimental_set_query_params(dummy=str(datetime.now().timestamp()))
+        st.query_params["refresh"] = str(datetime.now().timestamp())
 
     # -------------------------------
     # Filtro por fecha
@@ -118,6 +116,7 @@ if usuario:
     if movimientos_filtrados:
         df_filtrado = pd.DataFrame(movimientos_filtrados)
         df_filtrado = df_filtrado.sort_values(by="fecha", ascending=False)
+        # Formato moneda
         df_filtrado["monto"] = df_filtrado["monto"].apply(lambda x: f"${x:,.2f}")
         st.subheader("📋 Movimientos filtrados")
         st.dataframe(df_filtrado, use_container_width=True, height=300)
@@ -140,6 +139,7 @@ if usuario:
     st.markdown(f"- **Total Inversión:** ${total_inversion:,.2f}")
     st.markdown(f"- **Saldo Disponible:** ${saldo:,.2f}")
 
+    # Gráfica de barras colorida
     resumen = {
         "Ingresos": total_ingresos,
         "Gastos": total_gastos,
@@ -147,27 +147,49 @@ if usuario:
         "Inversión": total_inversion
     }
     df_resumen = pd.DataFrame(list(resumen.items()), columns=["Categoría", "Monto"])
-    colores = {"Ingresos": "#00B140","Gastos": "#FF4C4C","Ahorro": "#1E90FF","Inversión": "#FFD700"}
-    fig = px.bar(df_resumen, x="Categoría", y="Monto", text="Monto", height=500)
+    colores = {"Ingresos": "green", "Gastos": "red", "Ahorro": "blue", "Inversión": "gold"}
+
+    fig = px.bar(df_resumen, x="Categoría", y="Monto", color="Categoría", text="Monto", height=500)
     fig.update_traces(marker=dict(color=[colores[c] for c in df_resumen["Categoría"]]))
-    fig.update_layout(showlegend=False)
     st.plotly_chart(fig, use_container_width=True)
 
     # -------------------------------
-    # Botón de donación
+    # Botón de donación moderno
     # -------------------------------
     donar_html = """
-    <div style="display:flex;flex-direction:column;align-items:center;margin-top:20px;">
-        <a href="https://clientes.nequi.com.co/recargas" target="_blank"
-           style="text-decoration:none;color:white;background:linear-gradient(135deg,#00B140,#00FF70);
-                  padding:20px 40px;border-radius:12px;font-weight:bold;font-size:18px;
-                  box-shadow:2px 4px 10px rgba(0,0,0,0.2);transition:all 0.3s ease;">
+    <div style="
+        display:flex; 
+        flex-direction:column; 
+        align-items:center; 
+        margin-top:20px;
+    ">
+        <a href="https://clientes.nequi.com.co/recargas?_ga=2.76959132.82669726.1758904065-126051860.1758904065" 
+           target="_blank" 
+           style="
+                text-decoration:none;
+                color:white;
+                background: linear-gradient(135deg, #00B140, #00FF70);
+                padding:20px 40px;
+                border-radius:12px;
+                font-weight:bold;
+                font-size:18px;
+                box-shadow: 2px 4px 10px rgba(0,0,0,0.2);
+                transition: all 0.3s ease;
+           "
+        >
             ☕ Donar un café
         </a>
-        <span style="margin-top:10px;font-weight:bold;font-size:16px;color:#333;
-                     background-color:#f0f0f0;padding:5px 10px;border-radius:8px;
-                     box-shadow:1px 2px 5px rgba(0,0,0,0.1);">
-            Al Nequi 3248580136
+        <span style="
+            margin-top:10px;
+            font-weight:bold;
+            font-size:16px;
+            color:#333;
+            background-color:#f0f0f0;
+            padding:5px 10px;
+            border-radius:8px;
+            box-shadow: 1px 2px 5px rgba(0,0,0,0.1);
+        ">
+            Nequi 3248580136
         </span>
     </div>
     """
