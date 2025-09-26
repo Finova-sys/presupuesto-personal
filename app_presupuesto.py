@@ -96,7 +96,7 @@ if usuario:
         # Guardar automáticamente
         with open(archivo_usuario, "w", encoding="utf-8") as f:
             json.dump(data, f, ensure_ascii=False, indent=4)
-        st.success(f"{tipo} agregado: {monto} en {categoria} ({descripcion})")
+        st.success(f"{tipo} agregado: ${monto:,.0f} en {categoria} ({descripcion})")
 
     # -------------------------------
     # Filtro por fecha
@@ -117,6 +117,8 @@ if usuario:
     if movimientos_filtrados:
         df_filtrado = pd.DataFrame(movimientos_filtrados)
         df_filtrado = df_filtrado.sort_values(by="fecha", ascending=False)
+        # Formato moneda
+        df_filtrado["monto"] = df_filtrado["monto"].apply(lambda x: f"${x:,.0f}")
         st.subheader("📋 Movimientos filtrados")
         st.dataframe(df_filtrado, use_container_width=True, height=300)
     else:
@@ -132,13 +134,13 @@ if usuario:
     saldo = total_ingresos - total_gastos - total_ahorro - total_inversion
 
     st.subheader("💵 Resumen")
-    st.markdown(f"- **Total Ingresos:** {total_ingresos}")
-    st.markdown(f"- **Total Gastos:** {total_gastos}")
-    st.markdown(f"- **Total Ahorro:** {total_ahorro}")
-    st.markdown(f"- **Total Inversión:** {total_inversion}")
-    st.markdown(f"- **Saldo Disponible:** {saldo}")
+    st.markdown(f"- **Total Ingresos:** ${total_ingresos:,.0f}")
+    st.markdown(f"- **Total Gastos:** ${total_gastos:,.0f}")
+    st.markdown(f"- **Total Ahorro:** ${total_ahorro:,.0f}")
+    st.markdown(f"- **Total Inversión:** ${total_inversion:,.0f}")
+    st.markdown(f"- **Saldo Disponible:** ${saldo:,.0f}")
 
-    # Gráfica de barras colorida
+    # Gráfica de barras colorida por tipo de movimiento
     resumen = {
         "Ingresos": total_ingresos,
         "Gastos": total_gastos,
@@ -149,15 +151,16 @@ if usuario:
     colores = {"Ingresos": "green", "Gastos": "red", "Ahorro": "blue", "Inversión": "orange"}
 
     fig = px.bar(df_resumen, x="Categoría", y="Monto", color="Categoría", text="Monto", height=500)
-    fig.update_traces(marker=dict(color=[colores[c] for c in df_resumen["Categoría"]]))
+    fig.update_traces(marker=dict(color=[colores[c] for c in df_resumen["Categoría"]]),
+                      texttemplate='%{text:$,.0f}')
     st.plotly_chart(fig, use_container_width=True)
 
     # -------------------------------
-    # Botón de donación a Nequi (autorrellena número)
+    # Botón de donación bonito
     # -------------------------------
     st.subheader("☕ Donar un café")
     donar_html = """
-    <a href="https://nequi.com/p2p/3248580136" target="_blank" style="
+    <a href="https://www.nequi.com" target="_blank" style="
         text-decoration:none;
         color:white;
         background-color:#00B140; 
@@ -167,11 +170,14 @@ if usuario:
         display:inline-block;">
         ☕ Donar un café
     </a>
+    <p>Al Nequi 3248580136</p>
     """
     st.markdown(donar_html, unsafe_allow_html=True)
 
 else:
     st.warning("Por favor ingresa tu nombre para iniciar la app.")
+
+
 
 
 
