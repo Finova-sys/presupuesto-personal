@@ -141,7 +141,6 @@ if usuario:
     st.markdown(f"- **Total Gastos:** ${total_gastos:,.2f}")
     st.markdown(f"- **Total Ahorro:** ${total_ahorro:,.2f}")
     st.markdown(f"- **Total Inversión:** ${total_inversion:,.2f}")
-    st.markdown(f"- **Saldo Disponible:** ${saldo:,.2f}")
 
     resumen = {
         "Ingresos": total_ingresos,
@@ -157,10 +156,22 @@ if usuario:
     st.plotly_chart(fig, use_container_width=True)
 
     # -------------------------------
+    # Saldo disponible destacado
+    # -------------------------------
+    saldo_html = f"""
+    <div style="text-align:center; margin:20px 0;">
+        <h2 style="color:#1E90FF; font-size:36px; font-weight:bold;">
+            💳 Saldo Disponible: ${saldo:,.2f}
+        </h2>
+    </div>
+    """
+    st.markdown(saldo_html, unsafe_allow_html=True)
+
+    # -------------------------------
     # Botón de donación
     # -------------------------------
     donar_html = """
-    <div style="display:flex;flex-direction:column;align-items:center;margin-top:20px;">
+    <div style="display:flex;flex-direction:column;align-items:center;margin-top:10px;">
         <a href="https://clientes.nequi.com.co/recargas" target="_blank" 
            style="text-decoration:none;color:white;
                   background: linear-gradient(135deg, #00B140, #00FF70);
@@ -181,6 +192,8 @@ if usuario:
 
 else:
     st.warning("Por favor ingresa tu nombre para iniciar la app.")
+
+
 
 
 
