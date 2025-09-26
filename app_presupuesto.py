@@ -129,7 +129,7 @@ if usuario:
     st.markdown(f"- **Total Inversión:** ${total_inversion:,.2f}")
     st.markdown(f"- **Saldo Disponible:** ${saldo:,.2f}")
 
-    # Gráfica de barras colorida
+    # Gráfica de barras con colores modernos
     resumen = {
         "Ingresos": total_ingresos,
         "Gastos": total_gastos,
@@ -137,14 +137,15 @@ if usuario:
         "Inversión": total_inversion
     }
     df_resumen = pd.DataFrame(list(resumen.items()), columns=["Categoría", "Monto"])
-    colores = {"Ingresos":"green","Gastos":"red","Ahorro":"blue","Inversión":"purple"}
+    colores_modernos = {"Ingresos":"#1f77b4", "Gastos":"#ff7f0e", "Ahorro":"#2ca02c", "Inversión":"#d62728"}
 
     fig = px.bar(df_resumen, x="Categoría", y="Monto", color="Categoría", text="Monto", height=500)
-    fig.update_traces(marker=dict(color=[colores[c] for c in df_resumen["Categoría"]]))
+    fig.update_traces(marker=dict(color=[colores_modernos[c] for c in df_resumen["Categoría"]]))
+    fig.update_layout(showlegend=False)
     st.plotly_chart(fig, use_container_width=True)
 
     # -------------------------------
-    # Botón de donación moderno
+    # Botón de donación moderno con logo de Nequi
     # -------------------------------
     donar_html = """
     <div style="
@@ -165,28 +166,38 @@ if usuario:
                 font-size:18px;
                 box-shadow: 2px 4px 10px rgba(0,0,0,0.2);
                 transition: all 0.3s ease;
-           "
+                display:flex;
+                align-items:center;
+            "
         >
             ☕ Donar un café
         </a>
-        <span style="
-            margin-top:10px;
-            font-weight:bold;
-            font-size:16px;
-            color:#333;
-            background-color:#f0f0f0;
-            padding:5px 10px;
-            border-radius:8px;
-            box-shadow: 1px 2px 5px rgba(0,0,0,0.1);
-        ">
+        <a href="https://clientes.nequi.com.co/recargas?_ga=2.76959132.82669726.1758904065-126051860.1758904065" 
+           target="_blank"
+           style="
+               margin-top:10px;
+               text-decoration:none;
+               color:#333;
+               background-color:#f0f0f0;
+               padding:5px 10px;
+               border-radius:8px;
+               font-weight:bold;
+               font-size:16px;
+               box-shadow: 1px 2px 5px rgba(0,0,0,0.1);
+               display:flex;
+               align-items:center;
+           "
+        >
+            <img src="https://upload.wikimedia.org/wikipedia/commons/5/52/Nequi_logo.png" width="24" style="margin-right:8px;">
             Nequi 3248580136
-        </span>
+        </a>
     </div>
     """
     st.markdown(donar_html, unsafe_allow_html=True)
 
 else:
     st.warning("Por favor ingresa tu nombre para iniciar la app.")
+
 
 
 
