@@ -10,10 +10,12 @@ import plotly.express as px
 # -------------------------------
 # Configuración inicial
 # -------------------------------
-st.set_page_config(page_title="💰 Presupuesto Personal",
-                   page_icon="💸",
-                   layout="wide",
-                   initial_sidebar_state="collapsed")
+st.set_page_config(
+    page_title="💰 Presupuesto Personal",
+    page_icon="💸",
+    layout="wide",
+    initial_sidebar_state="collapsed"
+)
 
 # Ocultar menú y footer de Streamlit
 hide_streamlit_style = """
@@ -71,7 +73,11 @@ if usuario:
 
     if st.button("Agregar Movimiento"):
         fecha = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        data[tipo.lower()].append({
+        # -------------------------------
+        # Fix KeyError para inversión
+        # -------------------------------
+        tipo_key = "inversion" if tipo == "Inversión" else tipo.lower()
+        data[tipo_key].append({
             "fecha": fecha,
             "categoria": categoria,
             "descripcion": descripcion,
@@ -137,17 +143,19 @@ if usuario:
     st.plotly_chart(fig, use_container_width=True)
 
     # -------------------------------
-    # Botón de donación bonito
+    # Botón de donación bonito con Nequi (auto rellena número)
     # -------------------------------
     st.subheader("☕ Donar un café")
-    donar_html = """
-    <a href="https://nequi.com/3248580136" target="_blank" style="
+    nequi_num = "3248580136"
+    donar_html = f"""
+    <a href="https://nequi.com/{nequi_num}?amount=&concept=Donación%20App" target="_blank" style="
         text-decoration:none;
         color:white;
         background-color:#00B140; 
-        padding:10px 20px; 
-        border-radius:8px; 
+        padding:12px 24px; 
+        border-radius:10px; 
         font-weight:bold;
+        font-size:18px;
         display:inline-block;">
         ☕ Donar un café
     </a>
@@ -156,5 +164,6 @@ if usuario:
 
 else:
     st.warning("Por favor ingresa tu nombre para iniciar la app.")
+
 
 
