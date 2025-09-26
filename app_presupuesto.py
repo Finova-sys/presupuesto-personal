@@ -29,12 +29,6 @@ st.markdown(hide_streamlit_style, unsafe_allow_html=True)
 st.title("💰 Presupuesto Personal")
 
 # -------------------------------
-# Inicializar monto en session_state
-# -------------------------------
-if "monto_mov" not in st.session_state:
-    st.session_state.monto_mov = 0.0
-
-# -------------------------------
 # Nombre de usuario
 # -------------------------------
 usuario = st.text_input("Ingresa tu nombre para guardar tus datos", "")
@@ -75,7 +69,9 @@ if usuario:
         categoria = st.selectbox("Categoría", categorias_gasto, key="cat_mov")
 
     descripcion = st.selectbox("Descripción", descripciones_comunes.get(categoria, ["Otro"]), key="desc_mov")
-    monto = st.number_input("Monto", min_value=0.0, step=10.0, format="%.2f", key="monto_mov")
+    
+    # Número de monto con valor inicial 0
+    monto = st.number_input("Monto", min_value=0.0, step=10.0, format="%.2f", value=0.0, key="monto_mov")
 
     # Mapeo de tipo a clave correcta
     tipo_key_map = {"Ingreso":"ingresos","Gasto":"gastos","Ahorro":"ahorro","Inversión":"inversion"}
@@ -92,8 +88,8 @@ if usuario:
         with open(archivo_usuario, "w", encoding="utf-8") as f:
             json.dump(data, f, ensure_ascii=False, indent=4)
         st.success(f"{tipo} agregado: ${monto:,.2f} en {categoria} ({descripcion})")
-        # Reiniciar el monto a 0 después de guardar
-        st.session_state.monto_mov = 0.0
+        # Reiniciar input usando rerun
+        st.experimental_rerun()
 
     # -------------------------------
     # Filtro por fecha
@@ -114,7 +110,6 @@ if usuario:
     if movimientos_filtrados:
         df_filtrado = pd.DataFrame(movimientos_filtrados)
         df_filtrado = df_filtrado.sort_values(by="fecha", ascending=False)
-        # Formato moneda
         df_filtrado["monto"] = df_filtrado["monto"].apply(lambda x: f"${x:,.2f}")
         st.subheader("📋 Movimientos filtrados")
         st.dataframe(df_filtrado, use_container_width=True, height=300)
@@ -201,6 +196,7 @@ if usuario:
 
 else:
     st.warning("Por favor ingresa tu nombre para iniciar la app.")
+
 
 
 
