@@ -165,9 +165,18 @@ if usuario:
     }
     df_resumen = pd.DataFrame(list(resumen.items()), columns=["Categoría", "Monto"])
     colores = {"Ingresos": "#00B140","Gastos": "#FF4C4C","Ahorro": "#1E90FF","Inversión": "#FFD700"}
+
     fig = px.bar(df_resumen, x="Categoría", y="Monto", text="Monto", height=500)
-    fig.update_traces(marker=dict(color=[colores[c] for c in df_resumen["Categoría"]]))
-    fig.update_layout(showlegend=False)
+    fig.update_traces(
+        marker=dict(color=[colores[c] for c in df_resumen["Categoría"]]),
+        texttemplate="$%{y:,.2f}",       # 👈 Formato moneda en las etiquetas
+        textposition="outside"
+    )
+    fig.update_layout(
+        showlegend=False,
+        yaxis_tickprefix="$",            # 👈 Prefijo dólar en eje Y
+        yaxis_tickformat=",.2f"          # 👈 Separadores de miles y decimales
+    )
     st.plotly_chart(fig, use_container_width=True)
 
     # -------------------------------
@@ -207,7 +216,6 @@ if usuario:
 
 else:
     st.warning("Por favor ingresa tu nombre para iniciar la app.")
-
 
 
 
