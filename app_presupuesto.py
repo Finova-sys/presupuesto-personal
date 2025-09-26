@@ -185,7 +185,7 @@ if usuario:
 
         if st.button("📝 Editar Movimiento"):
             mov = df_filtrado.iloc[idx]
-            nuevo_monto = st.number_input("Nuevo monto", min_value=0.0, step=10.0, value=float(mov["monto"]))
+            nuevo_monto = st.number_input("Nuevo monto", min_value=0.0, step=10.0, value=float(mov["monto"].replace("$","").replace(",","")))
             if st.button("Guardar Cambios"):
                 # Buscar y actualizar en JSON
                 for t in data:
@@ -278,7 +278,7 @@ if usuario:
     st.plotly_chart(fig, use_container_width=True)
 
     # -------------------------------
-    # Saldo disponible debajo de la gráfica
+    # Saldo disponible debajo de la gráfica + botón de donar
     # -------------------------------
     saldo_bottom_html = f"""
     <div style="text-align:center; margin:20px 0;">
@@ -289,9 +289,6 @@ if usuario:
     """
     st.markdown(saldo_bottom_html, unsafe_allow_html=True)
 
-    # -------------------------------
-    # Botón de donación
-    # -------------------------------
     donar_html = """
     <div style="display:flex;flex-direction:column;align-items:center;margin-top:10px;">
         <a href="https://clientes.nequi.com.co/recargas" target="_blank" 
@@ -314,6 +311,7 @@ if usuario:
 
 else:
     st.warning("Por favor ingresa tu nombre para iniciar la app.")
+
 
 
 
