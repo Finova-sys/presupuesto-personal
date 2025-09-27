@@ -1,11 +1,11 @@
-# app_presupuesto_final.py
+# app_presupuesto_firebase.py
 
 import streamlit as st
 import pandas as pd
-import json
-import os
 from datetime import datetime
 import plotly.express as px
+import firebase_admin
+from firebase_admin import credentials, firestore
 
 # -------------------------------
 # Configuración inicial
@@ -29,18 +29,18 @@ st.markdown(hide_streamlit_style, unsafe_allow_html=True)
 st.title("💰 Presupuesto Personal")
 
 # -------------------------------
+# Conexión a Firebase
+# -------------------------------
+cred = credentials.Certificate("nombre_de_tu_archivo.json")  # <- reemplaza con tu archivo JSON
+firebase_admin.initialize_app(cred)
+db = firestore.client()
+
+# -------------------------------
 # Nombre de usuario
 # -------------------------------
 usuario = st.text_input("Ingresa tu nombre para guardar tus datos", "")
 
 if usuario:
-    archivo_usuario = f"{usuario}.json"
-    if os.path.exists(archivo_usuario):
-        with open(archivo_usuario, "r", encoding="utf-8") as f:
-            data = json.load(f)
-    else:
-        data = {"ingresos": [], "gastos": [], "ahorro": [], "inversion": []}
-
     # -------------------------------
     # Categorías y descripciones
     # -------------------------------
@@ -85,42 +85,32 @@ if usuario:
     descripcion = st.selectbox("Descripción", descripciones_comunes.get(categoria, ["Otro"]), key="desc_mov")
     monto = st.number_input("Monto", min_value=0.0, step=10.0, key="monto_mov", format="%.2f")
 
-    # Mapeo de tipo a clave correcta
-    tipo_key_map = {"Ingreso":"ingresos","Gasto":"gastos","Ahorro":"ahorro","Inversión":"inversion"}
-    tipo_key = tipo_key_map[tipo]
-
+    # -------------------------------
+    # Botón para agregar movimiento
+    # -------------------------------
     if st.button("Agregar Movimiento"):
         fecha = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        data[tipo_key].append({
-            "fecha": fecha,
+        movimiento = {
+            "tipo": tipo,
             "categoria": categoria,
             "descripcion": descripcion,
-            "monto": monto
-        })
-        with open(archivo_usuario, "w", encoding="utf-8") as f:
-            json.dump(data, f, ensure_ascii=False, indent=4)
+            "monto": monto,
+            "fecha": fecha
+        }
+
+        # Guardar en Firestore
+        db.collection("usuarios").document(usuario).collection("movimientos").add(movimiento)
         st.success(f"{tipo} agregado: ${monto:,.2f} en {categoria} ({descripcion})")
 
     # -------------------------------
-    # Resumen y gráfica
+    # Leer todos los movimientos del usuario
     # -------------------------------
-    total_ingresos = sum([i["monto"] for i in data["ingresos"]])
-    total_gastos = sum([g["monto"] for g in data["gastos"]])
-    total_ahorro = sum([a["monto"] for a in data["ahorro"]])
-    total_inversion = sum([inv["monto"] for inv in data["inversion"]])
-    saldo = total_ingresos - total_gastos - total_ahorro - total_inversion
-
-    # -------------------------------
-    # Saldo debajo del título principal
-    # -------------------------------
-    saldo_top_html = f"""
-    <div style="text-align:center; margin:10px 0;">
-        <h2 style="color:#1E90FF; font-size:38px; font-weight:bold;">
-            💳 Saldo Disponible: ${saldo:,.2f}
-        </h2>
-    </div>
-    """
-    st.markdown(saldo_top_html, unsafe_allow_html=True)
+    movimientos_filtrados = []
+    docs = db.collection("usuarios").document(usuario).collection("movimientos").stream()
+    for doc in docs:
+        mov = doc.to_dict()
+        mov["Tipo"] = mov["tipo"] if mov["tipo"] != "Inversión" else "Inversión"
+        movimientos_filtrados.append(mov)
 
     # -------------------------------
     # Filtro por fecha
@@ -129,19 +119,14 @@ if usuario:
     fecha_inicio = st.date_input("Desde")
     fecha_fin = st.date_input("Hasta")
 
-    movimientos_filtrados = []
-    for t in ["ingresos", "gastos", "ahorro", "inversion"]:
-        for mov in data[t]:
-            mov_fecha = datetime.strptime(mov["fecha"], "%Y-%m-%d %H:%M:%S").date()
-            if fecha_inicio <= mov_fecha <= fecha_fin:
-                mov_copy = mov.copy()
-                mov_copy["Tipo"] = t.capitalize() if t != "inversion" else "Inversión"
-                movimientos_filtrados.append(mov_copy)
+    movimientos_filtrados_fecha = [
+        m for m in movimientos_filtrados
+        if fecha_inicio <= datetime.strptime(m["fecha"], "%Y-%m-%d %H:%M:%S").date() <= fecha_fin
+    ]
 
-    if movimientos_filtrados:
-        df_filtrado = pd.DataFrame(movimientos_filtrados)
+    if movimientos_filtrados_fecha:
+        df_filtrado = pd.DataFrame(movimientos_filtrados_fecha)
         df_filtrado = df_filtrado.sort_values(by="fecha", ascending=False)
-        # Formato moneda
         df_filtrado["monto"] = df_filtrado["monto"].apply(lambda x: f"${x:,.2f}")
         st.subheader("📋 Movimientos filtrados")
         st.dataframe(df_filtrado, use_container_width=True, height=300)
@@ -149,8 +134,14 @@ if usuario:
         st.info("No hay movimientos en el rango de fechas seleccionado.")
 
     # -------------------------------
-    # Totales y gráfica
+    # Totales y resumen
     # -------------------------------
+    total_ingresos = sum([m["monto"] for m in movimientos_filtrados if m["tipo"]=="Ingreso"])
+    total_gastos = sum([m["monto"] for m in movimientos_filtrados if m["tipo"]=="Gasto"])
+    total_ahorro = sum([m["monto"] for m in movimientos_filtrados if m["tipo"]=="Ahorro"])
+    total_inversion = sum([m["monto"] for m in movimientos_filtrados if m["tipo"]=="Inversión"])
+    saldo = total_ingresos - total_gastos - total_ahorro - total_inversion
+
     st.subheader("💵 Resumen")
     st.markdown(f"- **Total Ingresos:** ${total_ingresos:,.2f}")
     st.markdown(f"- **Total Gastos:** ${total_gastos:,.2f}")
@@ -169,13 +160,13 @@ if usuario:
     fig = px.bar(df_resumen, x="Categoría", y="Monto", text="Monto", height=500)
     fig.update_traces(
         marker=dict(color=[colores[c] for c in df_resumen["Categoría"]]),
-        texttemplate="$%{y:,.2f}",       # 👈 Formato moneda en las etiquetas
+        texttemplate="$%{y:,.2f}",
         textposition="outside"
     )
     fig.update_layout(
         showlegend=False,
-        yaxis_tickprefix="$",            # 👈 Prefijo dólar en eje Y
-        yaxis_tickformat=",.2f"          # 👈 Separadores de miles y decimales
+        yaxis_tickprefix="$",
+        yaxis_tickformat=",.2f"
     )
     st.plotly_chart(fig, use_container_width=True)
 
@@ -217,6 +208,8 @@ if usuario:
 
 else:
     st.warning("Por favor ingresa tu nombre para iniciar la app.")
+
+
 
 
 
